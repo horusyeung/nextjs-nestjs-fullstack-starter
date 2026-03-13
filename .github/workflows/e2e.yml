@@ -1,11 +1,7 @@
 name: E2E Tests
 
 on:
-  pull_request:
-    branches: [master, staging]
-  push:
-    branches: [master, staging]
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch: # Manual trigger only — enable push/PR triggers after Cypress is installed
 
 concurrency:
   group: e2e-${{ github.ref }}
