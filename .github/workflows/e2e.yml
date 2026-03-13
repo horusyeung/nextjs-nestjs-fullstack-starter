@@ -1,0 +1,104 @@
+name: E2E Tests
+
+on:
+  pull_request:
+    branches: [master, staging]
+  push:
+    branches: [master, staging]
+  workflow_dispatch: # Allow manual trigger
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cypress-web:
+    name: Cypress — Web App
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: starter_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Generate Prisma client
+        run: yarn db:generate
+
+      - name: Run database migrations
+        run: yarn workspace @starter/database migrate:deploy
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/starter_db
+
+      - name: Build API
+        run: yarn workspace @starter/api build
+
+      - name: Start API server
+        run: yarn workspace @starter/api start:prod &
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/starter_db
+          PORT: 3001
+          NODE_ENV: test
+
+      - name: Build web app
+        run: yarn workspace @starter/web build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001
+
+      - name: Start web server
+        run: yarn workspace @starter/web start &
+
+      - name: Wait for servers
+        run: |
+          npx wait-on http://localhost:3001/health --timeout 60000
+          npx wait-on http://localhost:3002 --timeout 60000
+
+      - name: Run Cypress tests
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: apps/web
+          browser: chrome
+          install: false
+        env:
+          CYPRESS_BASE_URL: http://localhost:3002
+
+      - name: Upload Cypress screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-web-screenshots
+          path: apps/web/cypress/screenshots
+          retention-days: 7
+
+      - name: Upload Cypress videos
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-web-videos
+          path: apps/web/cypress/videos
+          retention-days: 7

@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+
+echo "Running pre-commit checks..."
+
+# Step 1: Lint
+echo "--- Linting ---"
+yarn lint || exit 1
+
+# Step 2: Unit tests
+echo "--- Unit Tests ---"
+yarn test || exit 1
+
+# Step 3: E2E tests (Cypress)
+# Requires dev server to be running.
+# Skip with: git commit --no-verify
+echo "--- E2E Tests ---"
+
+# Cypress: Web (requires dev server on :3002)
+if curl -s --max-time 2 http://localhost:3002 > /dev/null 2>&1; then
+  echo "Web server detected on :3002 — running Cypress tests..."
+  yarn workspace @starter/web test:e2e || exit 1
+else
+  echo "Web server not running on :3002 — skipping Cypress tests."
+  echo "  Start with: yarn dev:web"
+fi
+
+echo "All pre-commit checks passed!"

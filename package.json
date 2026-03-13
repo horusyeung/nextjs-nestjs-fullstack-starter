@@ -17,7 +17,11 @@
     "db:generate": "yarn workspace @starter/database generate",
     "db:studio": "yarn workspace @starter/database studio",
     "docker:up": "docker compose -f docker/docker-compose.yml up -d",
-    "docker:down": "docker compose -f docker/docker-compose.yml down"
+    "docker:down": "docker compose -f docker/docker-compose.yml down",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
   },
   "packageManager": "yarn@4.6.0",
   "engines": {
