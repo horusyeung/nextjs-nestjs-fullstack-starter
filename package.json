@@ -1,0 +1,26 @@
+{
+  "name": "nextjs-nestjs-fullstack-starter",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "yarn workspaces foreach -A -p run dev",
+    "dev:web": "yarn workspace @starter/web dev",
+    "dev:api": "yarn workspace @starter/api start:dev",
+    "build": "yarn workspaces foreach -A run build",
+    "lint": "yarn workspaces foreach -A run lint",
+    "test": "yarn workspaces foreach -A run test",
+    "db:migrate": "yarn workspace @starter/database migrate",
+    "db:generate": "yarn workspace @starter/database generate",
+    "db:studio": "yarn workspace @starter/database studio",
+    "docker:up": "docker compose -f docker/docker-compose.yml up -d",
+    "docker:down": "docker compose -f docker/docker-compose.yml down"
+  },
+  "packageManager": "yarn@4.6.0",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
